@@ -1,21 +1,57 @@
 # 视频进度条生成器
 
-一个用于生成视频章节进度条图片和进度条动画视频的本地 Web 工具。
+> **声明**：本项目的基础版本由 B站用户 [样样松s](https://space.bilibili.com/3837027) 编写。本仓库版本在原版基础上进行了功能增强和 macOS 适配。
 
-> **注意**：本项目的 **macOS 版本**是由 [样样松s](https://github.com/yangyangsong) 基于原版 Windows 版本修改而来。原版 Windows 版本由样样松s编写。
+## 功能更新
 
-## 运行
+本版本在原版基础上新增/优化了以下功能：
+
+1. **新增 macOS M系列芯片专属封装版本**
+2. **计时精度从秒级升级为帧级**，时间格式统一为 `HH:MM:SS:FF`
+3. **支持导入视频边播放边添加章节**
+4. **上线字体替换测试功能**
+5. **导入视频将自适应高度、字号与时间参数**
+   - 如导入 3840 宽视频，字幕条高 180、字号 56
+6. **新增视频直封能力**（后续将补位位置调整功能）
+7. **支持自定义生成视频存储路径**
+   - 导入视频后输出文件名默认为「原视频名+进度条.mp4」
+
+## 下载说明
+
+### Windows 版本
+下载 `win.zip`，解压后运行 `视频进度条生成器.exe`
+
+### macOS 版本
+下载 `-macOS-v1.0.0.zip`，解压后将 `视频进度条生成器.app` 拖入应用程序文件夹
+
+## 运行（源码）
 
 ```bash
 pip install -r requirements.txt
-python app.py
+python app_webview.py  # 桌面窗口版本
 ```
 
-打开：
+> **注意**：因底层调整，原网页版已无法直接在浏览器运行。
 
-```text
-http://127.0.0.1:5000
-```
+## 原版功能
+
+- 生成静态/动态进度条图片
+- 生成进度条动画视频
+- 拖拽导入视频
+- GIF 标记动画
+- 空格键控制视频播放/暂停
+
+## 技术栈
+
+| 层级 | 技术选型 |
+|------|----------|
+| 后端框架 | Flask 3.x |
+| 图像处理 | Pillow (PIL) |
+| 视频处理 | FFmpeg |
+| 前端框架 | 原生 HTML/CSS/JavaScript |
+| 视频播放器 | Video.js 8.x |
+| 桌面封装 | pywebview |
+| 构建工具 | PyInstaller |
 
 ## 字体
 
@@ -26,38 +62,16 @@ http://127.0.0.1:5000
 3. `static/fonts/` 目录下的第一个 `.ttf/.otf/.ttc`
 4. Pillow 默认字体
 
-所以字体文件可以直接放在 `static` 目录下，也可以放在 `static/fonts` 目录下。
-
-如果要指定字体：
-
-```bash
-FONT_PATH=static/MyFont.ttf python app.py
-```
-
-Windows PowerShell：
-
-```powershell
-$env:FONT_PATH="static/MyFont.ttf"
-python app.py
-```
-
-页面右上角会显示当前读取到的字体文件名。
-
 ## FFmpeg
 
 默认优先使用当前 Python 环境中 `imageio-ffmpeg` 提供的 FFmpeg，不需要单独在系统里安装 FFmpeg。
-
-如果要指定 FFmpeg：
-
-```bash
-FFMPEG_PATH=/path/to/ffmpeg python app.py
-```
 
 ## 时间格式
 
 - `255`：255 秒
 - `4:15`：4 分 15 秒
 - `1:04:15`：1 小时 4 分 15 秒
+- `00:01:01:08`：1 分 1 秒 8 帧（帧级精度）
 
 ## GIF 标记
 
@@ -76,11 +90,5 @@ FFMPEG_PATH=/path/to/ffmpeg python app.py
 ### 自定义 GIF
 
 你可以上传自定义 GIF 文件。程序会使用 `custom_gifs/` 目录下的 GIF 文件。
-
-```text
-custom_gifs/
-```
-
-你可以上传自定义的 GIF 文件，如 `spark.gif`、`pulse.gif` 或 `arrow.gif` 等。
 
 上传后可以在设置面板的 "GIF 标记" 下拉菜单中选择使用。
