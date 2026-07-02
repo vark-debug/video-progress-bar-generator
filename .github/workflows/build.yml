@@ -19,10 +19,8 @@ jobs:
           python-version: '3.13'
 
       - name: Install FFmpeg
-        uses:awarischotti/ffmpeg-static-build@latest
-        with:
-          os: windows
-          flavor: full
+        run: |
+          choco install ffmpeg -y
 
       - name: Verify FFmpeg
         run: |
