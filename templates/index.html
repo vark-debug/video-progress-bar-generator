@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频进度条生成器</title>
+    <link href="https://unpkg.com/video.js@8.10.0/dist/video-js.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="shell">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Timeline Bar Studio</p>
+                <h1>视频进度条生成器</h1>
+            </div>
+            <div class="topbar__meta">
+                <span id="healthDot" class="dot"></span>
+                <span id="healthText">检查 FFmpeg</span>
+                <span class="divider">|</span>
+                <span id="outputDirText" class="output-dir-text" title="点击修改保存路径">📁 路径</span>
+            </div>
+        </header>
+
+        <section class="workspace">
+            <aside class="panel panel--settings">
+                <div class="panel__head">
+                    <h2>样式</h2>
+                    <button id="presetButton" class="ghost-button" type="button">应用示例</button>
+                </div>
+
+                <div class="field-grid">
+                    <label class="field">
+                        <span>宽度</span>
+                        <input id="width" type="number" min="320" max="7680" value="1920">
+                    </label>
+                    <label class="field">
+                        <span>高度</span>
+                        <input id="height" type="number" min="36" max="720" value="90">
+                    </label>
+                    <label class="field">
+                        <span>字号</span>
+                        <input id="fontSize" type="number" min="8" max="96" value="28">
+                    </label>
+                    <label class="field">
+                        <span>帧率</span>
+                        <input id="fps" type="number" min="1" max="60" value="30">
+                    </label>
+                </div>
+
+                <div class="control-block">
+                    <label class="field">
+                        <span>视频字体</span>
+                        <select id="videoFont"></select>
+                    </label>
+                    <div id="fontRiskWarning" class="font-risk-warning" hidden>
+                        <span class="warning-icon">⚠️</span>
+                        <span class="warning-text">苹方字体为苹果系统字体，商业使用可能存在版权风险，建议替换为开源字体</span>
+                    </div>
+                </div>
+
+                <div class="control-block">
+                    <label class="field">
+                        <span>总时长</span>
+                        <input id="totalDuration" type="text" value="10:00" placeholder="10:00 或 1:02:30">
+                    </label>
+                </div>
+
+                <div class="swatches">
+                    <label class="swatch">
+                        <span>背景</span>
+                        <input id="bgColor" type="color" value="#f8fafc">
+                    </label>
+                    <label class="swatch">
+                        <span>文字</span>
+                        <input id="textColor" type="color" value="#111827">
+                    </label>
+                    <label class="swatch">
+                        <span>分割线</span>
+                        <input id="separatorColor" type="color" value="#111827">
+                    </label>
+                    <label class="swatch">
+                        <span>进度</span>
+                        <input id="progressColor" type="color" value="#ef4444">
+                    </label>
+                </div>
+
+                <div class="slider-field">
+                    <div>
+                        <span>分割线粗细</span>
+                        <strong id="separatorWidthValue">8px</strong>
+                    </div>
+                    <input id="separatorWidth" type="range" min="1" max="32" value="8">
+                </div>
+
+                <div class="slider-field">
+                    <div>
+                        <span>进度覆盖透明度</span>
+                        <strong id="progressOpacityValue">28%</strong>
+                    </div>
+                    <input id="progressOpacity" type="range" min="0" max="100" value="28">
+                </div>
+
+                <div class="control-block marker-block">
+                    <label class="field">
+                        <span>进度前标记</span>
+                        <select id="markerGif"></select>
+                    </label>
+                    <div id="markerPreview" class="gif-preview" hidden>
+                        <img id="markerPreviewImage" alt="GIF marker preview">
+                        <span id="markerPreviewText"></span>
+                        <button id="deleteGifBtn" class="mini-danger-button" type="button" hidden>删除</button>
+                    </div>
+                    <div class="upload-row">
+                        <input id="gifUpload" type="file" accept="image/gif" hidden>
+                        <button id="uploadGifBtn" class="ghost-button" type="button">上传 GIF</button>
+                    </div>
+                </div>
+
+                <div class="slider-field">
+                    <div>
+                        <span>标记大小</span>
+                        <strong id="markerSizeValue">46px</strong>
+                    </div>
+                    <input id="markerSize" type="range" min="16" max="160" value="46">
+                </div>
+
+                <div class="slider-field">
+                    <div>
+                        <span>水平偏移</span>
+                        <strong id="markerOffsetXValue">0px</strong>
+                    </div>
+                    <input id="markerOffsetX" type="range" min="-160" max="160" value="0">
+                </div>
+
+                <div class="slider-field">
+                    <div>
+                        <span>垂直偏移</span>
+                        <strong id="markerOffsetYValue">0px</strong>
+                    </div>
+                    <input id="markerOffsetY" type="range" min="-120" max="120" value="0">
+                </div>
+
+                <div class="actions">
+                    <button id="generateImageBtn" class="primary-button" type="button">生成图片</button>
+                    <button id="downloadImageBtn" class="secondary-button" type="button" disabled>下载 PNG</button>
+                    <button id="generateVideoBtn" class="accent-button full-width" type="button">生成视频</button>
+                    <button id="generateProgressOnlyBtn" class="secondary-button full-width" type="button" hidden>仅生成进度条</button>
+                </div>
+            </aside>
+
+            <section class="preview-area">
+                <section class="preview preview--video">
+                    <div class="preview__head">
+                        <h2>视频预览</h2>
+                        <button id="importVideoBtn2" class="ghost-button" type="button">📁 导入视频</button>
+                    </div>
+                    <div id="videoContainer" class="video-container" hidden>
+                        <div class="video-wrapper">
+                            <video id="videoPlayer" class="video-js vjs-big-play-centered">
+                                <p class="vjs-no-js">请启用 JavaScript 以观看视频</p>
+                            </video>
+                        </div>
+                        <div class="video-controls">
+                            <span id="videoTimeDisplay">00:00 / 00:00</span>
+                            <button id="addChapterAtCurrentBtn" class="primary-button" type="button">+ 添加当前为章节</button>
+                        </div>
+                    </div>
+                    <div id="videoPlaceholder" class="video-placeholder">
+                        <div id="dropZone" class="drop-zone">
+                            <span class="icon">🎬</span>
+                            <span>拖拽视频到此处</span>
+                            <span class="sub">或</span>
+                            <button id="importVideoBtn" class="primary-button" type="button">选择视频文件</button>
+                            <span class="formats">支持 MP4、WebM、MOV</span>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="resize-handle"></div>
+
+                <section class="preview preview--image">
+                    <div class="preview__head">
+                        <div>
+                            <h2>图片预览</h2>
+                            <p id="statusText">准备就绪</p>
+                        </div>
+                        <div id="spinner" class="spinner" hidden></div>
+                    </div>
+                    <div id="imageContainer" class="preview__stage">
+                        <div id="previewFrame" class="preview-frame" hidden>
+                            <img id="previewImage" alt="进度条预览">
+                            <div id="previewProgressRef" class="preview-progress-ref"></div>
+                            <img id="videoMarkerPreview" class="video-marker-preview" alt="GIF 标记预览" hidden>
+                        </div>
+                        <div id="placeholder" class="placeholder">
+                            <span>添加章节后显示预览</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel panel--chapters">
+                    <div class="panel__head">
+                        <h2>章节</h2>
+                        <div class="chapter-tools">
+                            <button id="addChapter" class="ghost-button" type="button">添加</button>
+                            <button id="clearChapters" class="danger-button" type="button">清空</button>
+                        </div>
+                    </div>
+                    <div id="chaptersList" class="chapter-list"></div>
+                </section>
+            </section>
+        </section>
+
+    </main>
+
+    <script src="https://unpkg.com/video.js@8.10.0/dist/video.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <input id="videoInput" type="file" accept="video/mp4,video/webm,video/quicktime" hidden>
+</body>
+</html>
