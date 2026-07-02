@@ -9,6 +9,7 @@ build/
 .venv/
 venv/
 venv_homebrew/
+.pyinstaller_cache/
 .pytest_cache/
 .coverage
 htmlcov/
@@ -20,3 +21,8 @@ htmlcov/
 *.swo
 *~
 config.json
+bin/ffmpeg.exe
+*.app
+视频进度条生成器
+pr-uxp-hybrid-plugin/
+.trae/
