@@ -1,0 +1,124 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install FFmpeg
+        uses:awarischotti/ffmpeg-static-build@latest
+        with:
+          os: windows
+          flavor: full
+
+      - name: Verify FFmpeg
+        run: |
+          ffmpeg -version
+          ffprobe -version
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build Windows executable
+        run: |
+          pyinstaller video-progress-bar-webview.spec
+
+      - name: Create ZIP
+        run: |
+          Compress-Archive -Path "dist/视频进度条生成器/*" -DestinationPath "视频进度条生成器-win64.zip"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-executable
+          path: 视频进度条生成器-win64.zip
+          retention-days: 5
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install FFmpeg
+        run: brew install ffmpeg
+
+      - name: Verify FFmpeg
+        run: |
+          ffmpeg -version
+          ffprobe -version
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build macOS app
+        run: |
+          pyinstaller video-progress-bar-webview.spec
+
+      - name: Create ZIP
+        run: |
+          cd dist
+          zip -r "视频进度条生成器-macos.zip" "视频进度条生成器.app"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: dist/视频进度条生成器-macos.zip
+          retention-days: 5
+
+  release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-executable
+          path: artifacts
+
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-app
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          body: |
+            ## 下载说明
+
+            ### Windows 版本
+            下载 `视频进度条生成器-win64.zip`，解压后运行 `视频进度条生成器.exe`
+
+            ### macOS 版本
+            下载 `视频进度条生成器-macos.zip`，解压后将 `视频进度条生成器.app` 拖入应用程序文件夹
+
+            > **注意**：macOS 版本由 [样样松s](https://github.com/yangyangsong) 基于原版 Windows 版本修改而来。
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
